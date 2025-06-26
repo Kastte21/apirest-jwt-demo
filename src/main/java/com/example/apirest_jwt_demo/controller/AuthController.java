@@ -1,7 +1,10 @@
 package com.example.apirest_jwt_demo.controller;
 
+import com.example.apirest_jwt_demo.dto.AuthResponse;
+import com.example.apirest_jwt_demo.dto.LoginRequest;
 import com.example.apirest_jwt_demo.dto.UserRegisterRequest;
 import com.example.apirest_jwt_demo.dto.UserResponse;
+import com.example.apirest_jwt_demo.service.AuthService;
 import com.example.apirest_jwt_demo.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +20,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
     private final UserService userService;
+    private final AuthService authService;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRegisterRequest request) {
         UserResponse user = userService.registerUser(request);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+        AuthResponse response = authService.login(loginRequest);
+        return ResponseEntity.ok(response);
     }
 
 }
