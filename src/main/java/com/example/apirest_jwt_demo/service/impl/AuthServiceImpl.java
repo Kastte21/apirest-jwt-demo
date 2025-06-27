@@ -7,30 +7,43 @@ import com.example.apirest_jwt_demo.repository.UserRepository;
 import com.example.apirest_jwt_demo.security.JwtUtil;
 import com.example.apirest_jwt_demo.service.AuthService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final AuthenticationManager authenticationManager;
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByUsername(request.getUsernameOrEmail())
-                .or(() -> userRepository.findByEmail(request.getUsernameOrEmail()))
-                .orElseThrow(() -> new IllegalArgumentException("Usuario o contraseña inválidos."));
+        // Intenta autenticar al usuario con Spring Security
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsernameOrEmail(),
+                        request.getPassword()
+                )
+        );
 
+        // Obtener el nombre de usuario autenticado
+        String authenticatedUsername = authentication.getName();
+
+        // Buscar el usuario correspondiente en la base de datos
+        User user = userRepository.findByUsername(authenticatedUsername)
+                .or(() -> userRepository.findByEmail(authenticatedUsername))
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado."));
+
+        // Verifica si el usuario está habilitado
         if (!user.getEnable()) {
             throw new IllegalArgumentException("Usuario deshabilitado.");
         }
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw  new IllegalArgumentException("Usuario o contraseña inválidos.");
-        }
-
+        // Genera tokens JWT
         String accessToken = jwtUtil.generateToken(user);
         String refreshToken = jwtUtil.generateRefreshToken(user);
 

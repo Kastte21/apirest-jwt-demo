@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -23,7 +24,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("El nombre de usuario ya existe.");
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("El correo ya esta en uso.");
+            throw new IllegalArgumentException("El correo ya está en uso.");
         }
 
         User user = User.builder()
@@ -43,12 +44,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public  boolean existsByUsername(String username) {
+    public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return  userRepository.existsByEmail(email);
+        return userRepository.existsByEmail(email);
     }
 }
