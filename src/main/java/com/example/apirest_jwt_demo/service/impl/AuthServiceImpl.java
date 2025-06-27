@@ -22,7 +22,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        // Intenta autenticar al usuario con Spring Security
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsernameOrEmail(),
@@ -30,7 +29,6 @@ public class AuthServiceImpl implements AuthService {
                 )
         );
 
-        // Obtener el nombre de usuario autenticado
         String authenticatedUsername = authentication.getName();
 
         // Buscar el usuario correspondiente en la base de datos
@@ -50,6 +48,31 @@ public class AuthServiceImpl implements AuthService {
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .build();
+    }
+
+    @Override
+    public AuthResponse refreshToken(String refreshToken) {
+        if (!jwtUtil.validateToken(refreshToken)) {
+            throw new IllegalArgumentException("Refresh token inválido o expirado.");
+        }
+
+        String username = jwtUtil.getUsernameFromToken(refreshToken);
+        User user = userRepository.findByUsername(username)
+                .or(() -> userRepository.findByEmail(username))
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+        if (!user.getEnable()) {
+            throw  new IllegalArgumentException("Usuario deshabilitado.");
+        }
+
+        String newAccessToken = jwtUtil.generateToken(user);
+        String newRefreshToken = jwtUtil.generateRefreshToken(user);
+
+        return AuthResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
                 .tokenType("Bearer")
                 .build();
     }

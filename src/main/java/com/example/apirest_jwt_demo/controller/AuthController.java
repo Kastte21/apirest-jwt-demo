@@ -1,9 +1,6 @@
 package com.example.apirest_jwt_demo.controller;
 
-import com.example.apirest_jwt_demo.dto.AuthResponse;
-import com.example.apirest_jwt_demo.dto.LoginRequest;
-import com.example.apirest_jwt_demo.dto.UserRegisterRequest;
-import com.example.apirest_jwt_demo.dto.UserResponse;
+import com.example.apirest_jwt_demo.dto.*;
 import com.example.apirest_jwt_demo.service.AuthService;
 import com.example.apirest_jwt_demo.service.UserService;
 import jakarta.validation.Valid;
@@ -31,6 +28,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         AuthResponse response = authService.login(loginRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        AuthResponse response = authService.refreshToken(request.getRefreshToken());
         return ResponseEntity.ok(response);
     }
 

@@ -1,6 +1,5 @@
 package com.example.apirest_jwt_demo.config;
 
-import com.example.apirest_jwt_demo.model.User;
 import com.example.apirest_jwt_demo.repository.UserRepository;
 import com.example.apirest_jwt_demo.security.CustomAuthenticationEntryPoint;
 import com.example.apirest_jwt_demo.security.JwtFilter;
