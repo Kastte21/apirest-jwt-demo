@@ -2,10 +2,12 @@ package com.example.apirest_jwt_demo.service.impl;
 
 import com.example.apirest_jwt_demo.dto.AuthResponse;
 import com.example.apirest_jwt_demo.dto.LoginRequest;
+import com.example.apirest_jwt_demo.model.RefreshToken;
 import com.example.apirest_jwt_demo.model.User;
 import com.example.apirest_jwt_demo.repository.UserRepository;
 import com.example.apirest_jwt_demo.security.JwtUtil;
 import com.example.apirest_jwt_demo.service.AuthService;
+import com.example.apirest_jwt_demo.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,6 +21,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public AuthResponse login(LoginRequest request) {
@@ -43,37 +46,32 @@ public class AuthServiceImpl implements AuthService {
 
         // Genera tokens JWT
         String accessToken = jwtUtil.generateToken(user);
-        String refreshToken = jwtUtil.generateRefreshToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .refreshToken(refreshToken.getToken())
                 .tokenType("Bearer")
                 .build();
     }
 
     @Override
     public AuthResponse refreshToken(String refreshToken) {
-        if (!jwtUtil.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("Refresh token inválido o expirado.");
-        }
-
-        String username = jwtUtil.getUsernameFromToken(refreshToken);
-        User user = userRepository.findByUsername(username)
-                .or(() -> userRepository.findByEmail(username))
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
-
-        if (!user.getEnable()) {
-            throw  new IllegalArgumentException("Usuario deshabilitado.");
-        }
+        RefreshToken storedToken = refreshTokenService.verifyToken(refreshToken);
+        User user = storedToken.getUser();
 
         String newAccessToken = jwtUtil.generateToken(user);
-        String newRefreshToken = jwtUtil.generateRefreshToken(user);
-
+        refreshTokenService.revokeToken(refreshToken);
+        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
+                .refreshToken(newRefreshToken.getToken())
                 .tokenType("Bearer")
                 .build();
+    }
+
+    @Override
+    public  void logout(String refreshToken) {
+        refreshTokenService.revokeToken(refreshToken);
     }
 }

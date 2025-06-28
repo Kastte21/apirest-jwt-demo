@@ -1,0 +1,12 @@
+package com.example.apirest_jwt_demo.repository;
+
+import com.example.apirest_jwt_demo.model.RefreshToken;
+import com.example.apirest_jwt_demo.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
+    Optional<RefreshToken> findByToken(String token);
+    void deleteAllByUser(User user);
+}
